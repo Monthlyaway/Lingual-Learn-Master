@@ -11,6 +11,8 @@ from langchain.chains import ConversationChain, LLMChain
 
 # from langchain.callbacks.base import BaseCallbackHandler
 
+import re
+
 st.set_page_config(
     page_title="Comprehension",
     page_icon="👋",
@@ -75,11 +77,11 @@ st.success("Model " + MODEL_NAME + " loaded, enjoy your journey")
 tab1, tab2, tab3 = st.tabs(["Article 1", "Article 2", "Article 3"])
 
 prompt_template = """ 
-Analyze and break down the following paragraph. Provide a detailed breakdown, including the identification of key themes, concepts, and any notable examples or explanations within the paragraph. 
+Analyze and break down the following paragraph. Provide a detailed breakdown, including the identification of key themes, concepts, and any notable examples or explanations within the paragraph. Answer in a markdown format.
 
 {input}
 
-
+Analyze:
 """
 
 llm_chain = LLMChain(
@@ -104,15 +106,17 @@ if input := st.chat_input("What is up?"):
         with st.chat_message("user"):
             st.markdown(input)
     
-        thinking_bar = st.progress(0, "AI is thinking...")
         with st.chat_message("assistant"):
-            response = llm_chain.predict(input = input)
-            thinking_bar.progress(0.5, "AI is thinking...")
-            thinking_bar.progress(1, "Done!")
-            st.markdown(response)
-            thinking_bar.empty()    
+            with st.spinner('Wait for it...'):
+                response = llm_chain.predict(input = input)
+            # Use regex to extract text after "Transformed Paragraph:"
+            match = re.search(r'Analyze:(.*)', response, re.DOTALL)
+
+            if match:
+                transformed_text = match.group(1).strip()
+            st.markdown(transformed_text)
         
-    st.session_state.compre_tab1_msgs.append({"role": "assistant", "content": response})
+    st.session_state.compre_tab1_msgs.append({"role": "assistant", "content": transformed_text})
 
 with tab2:
     st.subheader("Will be supported in the future :point_up:")

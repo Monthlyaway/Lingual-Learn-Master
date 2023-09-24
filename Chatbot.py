@@ -126,18 +126,15 @@ if original_paragraph := st.chat_input("What is up?"):
         with st.chat_message("user"):
             st.markdown(original_paragraph)
     
-        thinking_bar = st.progress(0, "AI is thinking...")
         with st.chat_message("assistant"):
-            response = llm_chain.predict(original_paragraph = original_paragraph)
-            thinking_bar.progress(0.5, "AI is thinking...")
+            with st.spinner("Wait for it..."):
+                response = llm_chain.predict(original_paragraph = original_paragraph)
             # Use regex to extract text after "Transformed Paragraph:"
             match = re.search(r'Transformed Paragraph:(.*)', response, re.DOTALL)
 
             if match:
                 transformed_text = match.group(1).strip()
-            thinking_bar.progress(1, "Done!")
             st.markdown(transformed_text)
-            thinking_bar.empty()    
         
     st.session_state.chat_tab1_msgs.append({"role": "assistant", "content": transformed_text})
 
