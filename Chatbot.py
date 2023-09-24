@@ -3,13 +3,15 @@ import streamlit as st
 from bigdl.llm.langchain.llms import TransformersLLM
 from langchain import PromptTemplate
 from langchain.chains import ConversationChain, LLMChain
-from langchain.chains.conversation.memory import ConversationBufferMemory
-from langchain.schema import SystemMessage
-from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
-from pathlib import Path
-from langchain.callbacks.stdout import StdOutCallbackHandler
+# from langchain.chains.conversation.memory import ConversationBufferMemory
+# from langchain.schema import SystemMessage
+# from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+# from pathlib import Path
+# from langchain.callbacks.stdout import StdOutCallbackHandler
 
-from langchain.callbacks.base import BaseCallbackHandler
+# from langchain.callbacks.base import BaseCallbackHandler
+
+import re
 
 st.set_page_config(
     page_title="Writing Tutor",
@@ -87,6 +89,8 @@ with st.sidebar:
 llm = load_transformers_llm(MODEL_NAME)
 st.success("Model " + MODEL_NAME + " loaded, enjoy your journey")
 
+
+
 tab1, tab2, tab3 = st.tabs(["Article 1", "Article 2", "Article 3"])
 
 prompt_template = """ 
@@ -102,8 +106,10 @@ llm_chain = LLMChain(
     llm=llm,
     prompt=PromptTemplate.from_template(prompt_template),
     llm_kwargs={"max_new_tokens":max_new_tokens}
-    ,verbose=False
+    ,verbose=False,
+    return_final_only = True
 )
+
 
 if "chat_tab1_msgs" not in st.session_state:
     st.session_state.chat_tab1_msgs = []
@@ -124,11 +130,16 @@ if original_paragraph := st.chat_input("What is up?"):
         with st.chat_message("assistant"):
             response = llm_chain.predict(original_paragraph = original_paragraph)
             thinking_bar.progress(0.5, "AI is thinking...")
+            # Use regex to extract text after "Transformed Paragraph:"
+            match = re.search(r'Transformed Paragraph:(.*)', response, re.DOTALL)
+
+            if match:
+                transformed_text = match.group(1).strip()
             thinking_bar.progress(1, "Done!")
-            st.markdown(response)
+            st.markdown(transformed_text)
             thinking_bar.empty()    
         
-    st.session_state.chat_tab1_msgs.append({"role": "assistant", "content": response})
+    st.session_state.chat_tab1_msgs.append({"role": "assistant", "content": transformed_text})
 
 with tab2:
     st.subheader("Will be supported in the future :point_up:")
